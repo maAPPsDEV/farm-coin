@@ -79,9 +79,9 @@ contract StakingReward {
   );
 
   /// @dev The staking token
-  IERC20 public stakingToken;
+  IERC20 public immutable stakingToken;
   /// @dev The reward token
-  IERC20 public rewardToken;
+  IERC20 public immutable rewardToken;
 
   /**
    * @dev The unique id generator for the deposited assets

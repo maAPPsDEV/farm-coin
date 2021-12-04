@@ -16,8 +16,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  *   them early for a 10% fee on the original USDC deposit.
  */
 contract StakingReward {
-  /// @dev Average number of block per day on ethereum
-  uint256 public constant BLOCKS_PER_DAY = 5760;
+  /// @dev Average number of second per day
+  uint256 public constant SECONDS_PER_DAY = 86400;
   /// @dev The percentage applied to withdraw earlier than lockup
   uint256 public constant EARLY_WITHDRAW_PERCENT = 90;
 
@@ -43,7 +43,7 @@ contract StakingReward {
   struct Asset {
     address user; // The owner who deposited this asset
     uint256 amount; // The amount deposited
-    uint128 depositedAt; // The block number when the deposit happened
+    uint128 depositedAt; // The timestamp when the deposit happened, it was originally designed in block number based
     RateTier interestRateTier; // The interest rate tier
     Status status; // The asset status
   }
@@ -135,7 +135,8 @@ contract StakingReward {
     Asset storage asset = assets[id];
     asset.user = msg.sender;
     asset.amount = _amount;
-    asset.depositedAt = uint128(block.number);
+    // solhint-disable-next-line not-rely-on-time
+    asset.depositedAt = uint128(block.timestamp);
     asset.interestRateTier = RateTier(_interestRateTier);
     asset.status = Status.DEPOSITED;
 
@@ -162,14 +163,15 @@ contract StakingReward {
     uint256 lockup = asset.depositedAt;
     uint256 interestRate = 10;
     if (asset.interestRateTier == RateTier.High) {
-      lockup += BLOCKS_PER_DAY * 365; // 1 year
+      lockup += SECONDS_PER_DAY * 365; // 1 year
       interestRate = 30;
     } else if (asset.interestRateTier == RateTier.Medium) {
-      lockup += BLOCKS_PER_DAY * 182; // 6 months
+      lockup += SECONDS_PER_DAY * 182; // 6 months
       interestRate = 20;
     }
 
-    if (lockup < block.number) {
+    // solhint-disable-next-line not-rely-on-time
+    if (asset.interestRateTier != RateTier.Low && lockup > block.timestamp) {
       // early withdrawn
       withdrawable = (asset.amount * EARLY_WITHDRAW_PERCENT) / 100; // can withdraw 90%
       return (withdrawable, 0);
@@ -182,8 +184,9 @@ contract StakingReward {
     /// calculate the interest based on APY, time unit and principal.
     /// For now it works in APR formula.
     rewards =
-      (withdrawable * (lockup - asset.depositedAt) * interestRate) /
-      BLOCKS_PER_DAY /
+      // solhint-disable-next-line not-rely-on-time
+      (withdrawable * (block.timestamp - asset.depositedAt) * interestRate) /
+      SECONDS_PER_DAY /
       36500;
   }
 

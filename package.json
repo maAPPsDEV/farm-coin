@@ -1,5 +1,5 @@
 {
-  "name": "attack",
+  "name": "farm-coin",
   "version": "1.0.0",
   "keywords": [
     "ethereum",
@@ -8,7 +8,7 @@
   ],
   "author": "tony@maapps.dev",
   "license": "MIT",
-  "description": "Solidity Game - Attack",
+  "description": "A Simple Staking Reward Manager",
   "scripts": {
     "compile": "hardhat compile",
     "typecheck": "tsc --noEmit",

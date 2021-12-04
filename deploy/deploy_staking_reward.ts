@@ -24,7 +24,10 @@ const deployStakingReward: DeployFunction = async (hre) => {
   });
 
   const stakingReward = await ethers.getContract("StakingReward");
-  farmCoin.transfer(stakingReward.address, await farmCoin.balanceOf(deployer));
+  await farmCoin.transfer(
+    stakingReward.address,
+    await farmCoin.balanceOf(deployer)
+  );
 };
 
 export default deployStakingReward;

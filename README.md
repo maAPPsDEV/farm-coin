@@ -1,69 +1,31 @@
-# Solidity Game - [Game Title] Attack
+# Solidity coding challenge - A simple staking reward manager
 
-_Inspired by OpenZeppelin's [Ethernaut](https://ethernaut.openzeppelin.com), [Game Title] Level_
+## Description
 
-⚠️Do not try on mainnet!
+Create a smart contract which accepts USDC deposits and pays out interest in the form of a new ERC-20 that you create called FarmCoin. The interest rate should be determined by how long a user agrees to lock up their USDC deposit. If the user wishes to unlock their tokens early, they should be able to withdraw them for a 10% fee.
 
-## Task
+Functionality:
+- A contract that accepts USDC deposits and rewards the user with FarmCoins
+- If there is no lock up period, the user should earn 10% APY in FarmCoin
+- For a six month lock up, the user should earn 20% APY in FarmCoin
+- For a 1 year lock up, the user should earn 30% APY in FarmCoin
+- For example, if a user deposits 100 USDC with no lockup, their deposit should begin accruing interest immediately, at a rate of 10 FarmCoins per year.
+- If the user locks up their USDC for higher returns, they should be able to withdraw them early for a 10% fee on the original USDC deposit.
 
-Hacker the basic token contract below.
+Your methods should be unit tested to confirm the contract's logic is operating as expected.
 
-1. You are given 20 tokens to start with and you will beat the game if you somehow manage to get your hands on any additional tokens. Preferably a very large amount of tokens.
+## Technical Note
 
-_Hint:_
-
-1. What is an odometer?
-
-## What will you learn?
-
-1. Solidity Security Consideration
-2. **Underflow** and **Overflow** in use of unsigned integers
-
-## What is the most difficult challenge?
-
-**You won't get success to attack if the target contract has been complied in Solidity 0.8.0 or uppper** 🤔
-
-> [**Solidity v0.8.0 Breaking Changes**](https://docs.soliditylang.org/en/v0.8.5/080-breaking-changes.html?highlight=underflow#silent-changes-of-the-semantics)
->
-> Arithmetic operations revert on **underflow** and **overflow**. You can use `unchecked { ... }` to use the previous wrapping behaviour.
->
-> Checks for overflow are very common, so we made them the default to increase readability of code, even if it comes at a slight increase of gas costs.
-
-I had tried to do everything in Solidity 0.8.5 at first time, but it didn't work, as it reverted transactions everytime it met underflow.
-
-Finally, I found that Solidity included those checks by defaults while using sliencely more gas.
-
-So, don't you need to use [`SafeMath`](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol)?
-
-## Source Code
-
-⚠️This contract contains a bug or risk. Do not use on mainnet!
-
-```solidity
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.6.0;
-
-contract Token {
-  mapping(address => uint256) balances;
-  uint256 public totalSupply;
-
-  constructor(uint256 _initialSupply) public {
-    balances[msg.sender] = totalSupply = _initialSupply;
-  }
-
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(balances[msg.sender] - _value >= 0);
-    balances[msg.sender] -= _value;
-    balances[_to] += _value;
-    return true;
-  }
-
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-}
-
-```
+1. Use block.number
+  In the beginning, the reward manager contract was designed to calculate the reward amount based on the block number, in order to avoid a potential risk caused by block timestamp.
+  But we realized that in the case of using block number, it would very difficult to test rewards for example 1 year, because JSON RPC doesn't have a method to advance multiple blocks.
+  So, for now, we decided to use block timestamp to calculate the reward amount, and assume that the contract is vulnerable to the dishonest node attack.
+  However, it's enough to show the basic reward manager and its typical logic for a testing purpose.
+  
+2. APY
+  Based on the definition of [Annual percentage yield](https://en.wikipedia.org/wiki/Annual_percentage_yield), given _APY_, _term_ and _principal_, in order to calculate _interest_, we need a complex math equation.
+  And it is not possible to extend the equation into multiple integer formulas without a special math library.
+  In the current implementation, we don't use any math library to avoid complexity, which means that the reward calculation is not quite correct in terms of math.
 
 ## Configuration
 
@@ -73,7 +35,7 @@ contract Token {
 yarn install
 ```
 
-## Test and Attack!💥
+## Test💥
 
 ### Run Tests
 
@@ -84,20 +46,36 @@ yarn test
 You should see the result like following:
 
 ```
-truffle(develop)> test
-Using network 'develop'.
+  StakingReward
+    No lockup at 10% APY rewards
+      √ should revert on deposit 0 USDC
+      √ should revert on deposit at invalid rate tier
+      √ should deposit successfully (130ms)
+      √ should revert on withdraw an invalid id
+      √ should revert on withdraw an unowned asset (89ms)
+      √ should withdraw early
+      √ should withdraw after lockup period (50ms)
+      √ should revert on withdraw an asset already withdrawn
+    6 months lockup at 20% APY rewards
+      √ should revert on deposit 0 USDC
+      √ should revert on deposit at invalid rate tier
+      √ should deposit successfully (80ms)
+      √ should revert on withdraw an invalid id
+      √ should revert on withdraw an unowned asset (56ms)
+      √ should withdraw early (45ms)
+      √ should withdraw after lockup period (44ms)
+      √ should revert on withdraw an asset already withdrawn
+    1 year lockup at 30% APY rewards
+      √ should revert on deposit 0 USDC
+      √ should revert on deposit at invalid rate tier
+      √ should deposit successfully (78ms)
+      √ should revert on withdraw an invalid id
+      √ should revert on withdraw an unowned asset (87ms)
+      √ should withdraw early (47ms)
+      √ should withdraw after lockup period (45ms)
+      √ should revert on withdraw an asset already withdrawn
 
 
-Compiling your contracts...
-===========================
-> Everything is up to date, there is nothing to compile.
-
-
-
-  Contract: Hacker
-    √ should steal countless of tokens (377ms)
-
-
-  1 passing (440ms)
+  24 passing (2s)
 
 ```

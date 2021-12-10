@@ -17,13 +17,14 @@ Your methods should be unit tested to confirm the contract's logic is operating 
 ## Technical Note
 
 1. Use block.number
-  In the beginning, the reward manager contract was designed to calculate the reward amount based on the block number, in order to avoid a potential risk caused by block timestamp.
+    
+    In the beginning, the reward manager contract was designed to calculate the reward amount based on the block number, in order to avoid a potential risk caused by block timestamp.
   But we realized that in the case of using block number, it would very difficult to test rewards for example 1 year, because JSON RPC doesn't have a method to advance multiple blocks.
   So, for now, we decided to use block timestamp to calculate the reward amount, and assume that the contract is vulnerable to the dishonest node attack.
   However, it's enough to show the basic reward manager and its typical logic for a testing purpose.
-  
 2. APY
-  Based on the definition of [Annual percentage yield](https://en.wikipedia.org/wiki/Annual_percentage_yield), given _APY_, _term_ and _principal_, in order to calculate _interest_, we need a complex math equation.
+   
+   Based on the definition of [Annual percentage yield](https://en.wikipedia.org/wiki/Annual_percentage_yield), given _APY_, _term_ and _principal_, in order to calculate _interest_, we need a complex math equation.
   And it is not possible to extend the equation into multiple integer formulas without a special math library.
   In the current implementation, we don't use any math library to avoid complexity, which means that the reward calculation is not quite correct in terms of math.
 
